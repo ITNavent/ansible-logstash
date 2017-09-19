@@ -57,8 +57,9 @@
   when: logstash_is_installed.stat.exists == False
 
 - name: Create default file
+  become: yes
   template:
-    src: ../templates/logstash.environment.j2
+    src: ../templates/logstash.environment
     dest: /etc/default/logstash
 
 #- name: Create init script
