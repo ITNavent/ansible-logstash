@@ -61,19 +61,19 @@
 #    src: ../templates/logstash.environment
 #    dest: /etc/default/logstash
 
-- name: Create init script
-  become: yes
-  template:
-    src: ../templates/init.Debian
-    dest: /etc/init.d/logstash
-    mode: 0755
-
-- name: Create service file
-  become: yes
-  template:
-    src: ../templates/logstash.service
-    dest: /lib/systemd/system/logstash.service
-    mode: 0750
+#- name: Create init script
+#  become: yes
+#  template:
+#    src: ../templates/init.Debian
+#    dest: /etc/init.d/logstash
+#    mode: 0755
+#
+#- name: Create service file
+#  become: yes
+#  template:
+#    src: ../templates/logstash.service
+#    dest: /lib/systemd/system/logstash.service
+#    mode: 0750
 
 - name: Create log directory
   become: yes
@@ -98,6 +98,9 @@
     state: directory
     group: "{{ logstash_group }}"
     owner: "{{ logstash_user }}"
+
+- name: Execute system-install
+  command: "{{ logstash_install_dir }}logstash/bin/system-install"
 
 - name: Update systemd
   become: yes
