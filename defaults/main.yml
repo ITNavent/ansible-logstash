@@ -1,0 +1,6 @@
+logstash_group: logstash
+logstash_user: logstash
+logstash_install_dir: /opt/
+logstash_version: 5.2.0
+logstash_log_dir: /var/log/logstash
+logstash_data_dir: /var/lib/logstash

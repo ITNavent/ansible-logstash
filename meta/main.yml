@@ -1,0 +1,23 @@
+---
+dependencies: []
+
+galaxy_info:
+  author: Guido Navalesi
+  description: Logstash for Linux.
+  company: "Navent"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 1.8
+  platforms:
+  - name: LS
+    versions:
+    - all
+  - name: Debian
+    versions:
+    - all
+  - name: Ubuntu
+    versions:
+    - all
+  galaxy_tags:
+    - web
+    - system
+    - monitoring
