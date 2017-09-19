@@ -56,11 +56,12 @@
     state: link
   when: logstash_is_installed.stat.exists == False
 
-- name: Create default file
+- name: Create startup file
   become: yes
   template:
-    src: ../templates/logstash.environment
-    dest: /etc/default/logstash
+    src: startup.options.j2
+    dest: "{{ logstash_install_dir }}logstash/config/startup.options"
+    backup: yes
 
 #- name: Create init script
 #  become: yes
