@@ -56,10 +56,10 @@
     state: link
   when: logstash_is_installed.stat.exists == False
 
-#- name: Create default file
-#  template:
-#    src: ../templates/logstash.environment
-#    dest: /etc/default/logstash
+- name: Create default file
+  template:
+    src: ../templates/logstash.environment.j2
+    dest: /etc/default/logstash
 
 #- name: Create init script
 #  become: yes
