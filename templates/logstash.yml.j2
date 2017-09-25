@@ -61,7 +61,7 @@ path.config: {{ logstash_path_config }}
 config.string: {{ logstash_config_string }}
 {% else %}
 # config.string:
-{% elif %}
+{% endif %}
 #
 # At startup, test if the configuration is valid and exit (dry run)
 #
