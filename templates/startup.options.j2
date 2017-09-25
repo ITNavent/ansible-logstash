@@ -12,7 +12,7 @@
 JAVACMD=/usr/bin/java
 
 # Set a home directory
-LS_HOME={{ logstash_install_dir }}logstash
+LS_HOME={{ logstash_install_dir }}
 
 # logstash settings directory, the path which contains logstash.yml
 LS_SETTINGS_DIR="${LS_HOME}/config"
@@ -32,7 +32,7 @@ LS_GROUP={{ logstash_group }}
 
 # Enable GC logging by uncommenting the appropriate lines in the GC logging
 # section in jvm.options
-LS_GC_LOG_FILE={{ logstash_log_dir }}/gc.log
+LS_GC_LOG_FILE={{ logstash_path_logs }}/gc.log
 
 # Open file limit
 LS_OPEN_FILES=16384
