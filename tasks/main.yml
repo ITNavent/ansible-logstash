@@ -1,9 +1,5 @@
 ---
 
-- name: Debug
-  debug:
-    msg: "{{ hostvars }}"
+- include: install.yml
 
-#- include: install.yml
-#
-#- include: configure.yml
+- include: configure.yml
