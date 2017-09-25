@@ -1,0 +1,27 @@
+---
+
+- name: Configure Logstash
+  template:
+    src: logstash.yml.j2
+    dest: "{{ logstash_install_dir }}/config/logstash.yml"
+    owner: "{{ logstash_user }}"
+    group: "{{ logstash_group }}"
+    backup: yes
+    mode: 0750
+  notify: restart logstash
+
+- name: Configure pipelines
+  copy:
+    src: "{{ item }}"
+    dest: "{{ logstash_path_config }}"
+    owner: "{{ logstash_user }}"
+    group: "{{ logstash_group }}"
+    mode: 0750
+  with_items: "{{ logstash_pipelines }}"
+  notify: restart logstash
+
+- name: Start Logstash
+  service:
+    name: logstash
+    state: started
+    enabled: yes
