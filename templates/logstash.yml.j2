@@ -164,5 +164,5 @@ path.plugins: ["{{ logstash_path_plugins | join('","') }}"]
 
 # Settings path
 {% if logstash_path_settings is defined %}
-path.settings: ["{{ logstash_path_settings }}"]
+path.settings: "{{ logstash_path_settings }}"
 {% endif %}
