@@ -13,7 +13,7 @@
 - name: Configure pipelines
   copy:
     src: "{{ item }}"
-    dest: "{{ logstash_path_config }}"
+    dest: "{{ logstash_path_config }}/{{ item }}"
     owner: "{{ logstash_user }}"
     group: "{{ logstash_group }}"
     mode: 0750

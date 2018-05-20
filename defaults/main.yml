@@ -45,3 +45,4 @@ logstash_path_logs: "{{ logstash_install_dir }}/logs"
 
 # Other settings
 logstash_path_plugins: []
+logstash_path_settings: "{{ logstash_install_dir }}/settings"
