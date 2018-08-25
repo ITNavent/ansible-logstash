@@ -36,8 +36,3 @@ logstash_conf_http_port: 9600
 logstash_conf_log_level: info
 logstash_conf_log_format: plain
 ```
-
-## Creacion de pipelines
-Crear los archivos ```.conf``` con la configuracion de
-los pipelines y utilizar la variable ```logstash_pipeline_files```
-para incluirlos.
