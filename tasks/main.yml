@@ -1,5 +1,38 @@
 ---
 
-- include: install.yml
+- name: Add ElasticSearch apt key
+  shell: wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
 
-- include: configure.yml
+- name: Install Logstash pre-req software
+  apt:
+    name: "{{ item }}"
+  with_items: "{{ logstash_prereq }}"
+
+- name: Add Logstash apt repository.
+  apt_repository:
+    repo: "{{ logstash_elastic_repo_url }}"
+    state: present
+
+- name: Install Logstash package
+  apt:
+    name: "logstash={{ logstash_deb_package_version }}"
+    state: present
+
+- name: Ensure Logstash is started and enabled on boot.
+  service:
+    name: "logstash"
+    state: started
+    enabled: yes
+
+- name: Install jvm.options
+  template:
+    src: jvm.options.j2
+    dest: /etc/logstash/jvm.options
+  notify: restart logstash
+
+- name: Install logstash.yml
+  template:
+    src: logstash.yml.j2
+    dest: /etc/logstash/logstash.yml
+  notify: restart logstash
+
