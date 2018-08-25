@@ -1,11 +1,12 @@
+#
 # {{ ansible_managed }}
 #
 # ------------  Node identity ------------
 #
 # Use a descriptive name for the node:
 #
-{% if logstash_node_name != "" %}
-node.name: {{ logstash_node_name }}
+{% if logstash_conf_node_name is defined %}
+node.name: {{ logstash_conf_node_name }}
 {% else %}
 # node.name: test
 {% endif %}
@@ -17,29 +18,49 @@ node.name: {{ logstash_node_name }}
 # Which directory should be used by logstash and its plugins
 # for any persistent needs. Defaults to LOGSTASH_HOME/data
 #
-path.data: {{ logstash_path_data }}
+{% if logstash_conf_path_data is defined %}
+path.data: {{ logstash_conf_path_data }}
+{% else %}
+# path.data: /var/lib/logstash
+{% endif %}
 #
 # ------------ Pipeline Settings --------------
+#
+# The ID of the pipeline.
+#
+{% if logstash_conf_pipeline_id is defined %}
+pipeline.id: {{ logstash_conf_pipeline_id }}
+{% else %}
+# pipeline.id: main
+{% endif %}
 #
 # Set the number of workers that will, in parallel, execute the filters+outputs
 # stage of the pipeline.
 #
 # This defaults to the number of the host's CPU cores.
 #
-pipeline.workers: {{ logstash_pipeline_workers }}
-#
-# How many workers should be used per output plugin instance
-#
-pipeline.output.workers: {{ logstash_pipeline_output_workers }}
+{% if logstash_conf_pipeline_workers is defined %}
+pipeline.workers: {{ logstash_conf_pipeline_workers }}
+{% else %}
+# pipeline.workers: 2
+{% endif %}
 #
 # How many events to retrieve from inputs before sending to filters+workers
 #
-pipeline.batch.size: {{ logstash_pipeline_batch_size }}
+{% if logstash_conf_pipeline_batch_size is defined %}
+pipeline.batch.size: {{ logstash_conf_pipeline_batch_size }}
+{% else %}
+# pipeline.batch.size: 125
+{% endif %}
 #
-# How long to wait before dispatching an undersized batch to filters+workers
-# Value is in milliseconds.
+# How long to wait in milliseconds while polling for the next event
+# before dispatching an undersized batch to filters+outputs
 #
-pipeline.batch.delay: {{ logstash_pipeline_batch_delay }}
+{% if logstash_conf_pipeline_batch_delay is defined %}
+pipeline.batch.delay: {{ logstash_conf_pipeline_batch_delay }}
+{% else %}
+# pipeline.batch.delay: 50
+{% endif %}
 #
 # Force Logstash to exit during shutdown even if there are still inflight
 # events in memory. By default, logstash will refuse to quit until all
@@ -47,96 +68,239 @@ pipeline.batch.delay: {{ logstash_pipeline_batch_delay }}
 #
 # WARNING: enabling this can lead to data loss during shutdown
 #
-pipeline.unsafe_shutdown: {{ logstash_pipeline_unsafe_shutdown | lower }}
+{% if logstash_conf_pipeline_unsafe_shutdown is defined %}
+pipeline.unsafe_shutdown: {{ logstash_conf_pipeline_unsafe_shutdown | lower }}
+{% else %}
+# pipeline.unsafe_shutdown: false
+{% endif %}
 #
 # ------------ Pipeline Configuration Settings --------------
 #
 # Where to fetch the pipeline configuration for the main pipeline
 #
-path.config: {{ logstash_path_config }}
+{% if logstash_conf_path_config is defined %}
+path.config: {{ logstash_conf_path_config }}
+{% else %}
+# path.config:
+{% endif %}
 #
 # Pipeline configuration string for the main pipeline
 #
-{% if logstash_config_string is defined and logstash_config_string != "" %}
-config.string: {{ logstash_config_string }}
+{% if logstash_conf_config_string is defined %}
+config.string: {{ logstash_conf_config_string }}
 {% else %}
-# config.string:
+# config.string: #
 {% endif %}
-#
 # At startup, test if the configuration is valid and exit (dry run)
 #
-config.test_and_exit: {{ logstash_config_test_and_exit | lower }}
+{% if logstash_conf_config_test_and_exit is defined %}
+config.test_and_exit: {{ logstash_conf_config_test_and_exit | lower }}
+{% else %}
+# config.test_and_exit: false
+{% endif %}
 #
 # Periodically check if the configuration has changed and reload the pipeline
 # This can also be triggered manually through the SIGHUP signal
 #
-config.reload.automatic: {{ logstash_config_reload_automatic | lower }}
+{% if logstash_conf_config_reload_automatic is defined %}
+config.reload.automatic: {{ logstash_conf_config_reload_automatic | lower }}
+{% else %}
+# config.reload.automatic: false
+{% endif %}
 #
 # How often to check if the pipeline configuration has changed (in seconds)
 #
-config.reload.interval: {{ logstash_config_reload_interval }}
+{% if logstash_conf_config_reload_interval is defined %}
+config.reload.interval: {{ logstash_conf_config_reload_interval }}
+{% else %}
+# config.reload.interval: 3s
+{% endif %}
 #
 # Show fully compiled configuration as debug log message
 # NOTE: --log.level must be 'debug'
 #
-config.debug: {{ logstash_config_debug | lower }}
+{% if logstash_conf_config_debug is defined %}
+config.debug: {{ logstash_conf_config_debug | lower }}
+{% else %}
+# config.debug: false
+{% endif %}
+#
+# When enabled, process escaped characters such as \n and \" in strings in the
+# pipeline configuration files.
+#
+{% if logstash_conf_config_support_escapes is defined %}
+config.support_escapes: {{ logstash_conf_config_support_escapes | lower }}
+{% else %}
+# config.support_escapes: false
+{% endif %}
+#
+# ------------ Module Settings ---------------
+# Define modules here.  Modules definitions must be defined as an array.
+# The simple way to see this is to prepend each `name` with a `-`, and keep
+# all associated variables under the `name` they are associated with, and
+# above the next, like this:
+#
+# modules:
+#   - name: MODULE_NAME
+#     var.PLUGINTYPE1.PLUGINNAME1.KEY1: VALUE
+#     var.PLUGINTYPE1.PLUGINNAME1.KEY2: VALUE
+#     var.PLUGINTYPE2.PLUGINNAME1.KEY1: VALUE
+#     var.PLUGINTYPE3.PLUGINNAME3.KEY1: VALUE
+#
+# Module variable names must be in the format of
+#
+# var.PLUGIN_TYPE.PLUGIN_NAME.KEY
+#
+{% if logstash_conf_modules is defined %}
+modules: {{ logstash_conf_modules | to_json }}
+{% else %}
+# config.modules: []
+{% endif %}
+#
+# ------------ Cloud Settings ---------------
+# Define Elastic Cloud settings here.
+# Format of cloud.id is a base64 value e.g. dXMtZWFzdC0xLmF3cy5mb3VuZC5pbyRub3RhcmVhbCRpZGVudGlmaWVy
+# and it may have an label prefix e.g. staging:dXMtZ...
+# This will overwrite 'var.elasticsearch.hosts' and 'var.kibana.host'
+{% if logstash_conf_cloud_id is defined %}
+cloud.id: {{ logstash_conf_cloud_id }}
+{% else %}
+# cloud.id: <identifier>
+{% endif %}
+#
+# Format of cloud.auth is: <user>:<pass>
+# This is optional
+# If supplied this will overwrite 'var.elasticsearch.username' and 'var.elasticsearch.password'
+# If supplied this will overwrite 'var.kibana.username' and 'var.kibana.password'
+{% if logstash_conf_cloud_auth is defined %}
+cloud.auth: {{ logstash_conf_cloud_auth }}
+{% else %}
+# cloud.auth: elastic:<password>
+{% endif %}
 #
 # ------------ Queuing Settings --------------
 #
 # Internal queuing model, "memory" for legacy in-memory based queuing and
 # "persisted" for disk-based acked queueing. Defaults is memory
 #
-queue.type: {{ logstash_queue_type }}
+{% if logstash_conf_queue_type is defined %}
+queue.type: {{ logstash_conf_queue_type }}
+{% else %}
+# queue.type: memory
+{% endif %}
 #
 # If using queue.type: persisted, the directory path where the data files will be stored.
 # Default is path.data/queue
 #
-path.queue: {{ logstash_path_queue }}
+{% if logstash_conf_path_queue is defined %}
+path.queue: {{ logstash_conf_path_queue }}
+{% else %}
+# path.queue:
+{% endif %}
 #
 # If using queue.type: persisted, the page data files size. The queue data consists of
-# append-only data files separated into pages. Default is 250mb
+# append-only data files separated into pages. Default is 64mb
 #
-queue.page_capacity: {{ logstash_queue_page_capacity }}
+{% if logstash_conf_queue_page_capacity is defined %}
+queue.page_capacity: {{ logstash_conf_queue_page_capacity }}
+{% else %}
+# queue.page_capacity: 64mb
+{% endif %}
 #
 # If using queue.type: persisted, the maximum number of unread events in the queue.
 # Default is 0 (unlimited)
 #
-queue.max_events: {{ logstash_queue_max_events }}
+{% if logstash_conf_queue_max_events is defined %}
+queue.max_events: {{ logstash_conf_queue_max_events }}
+{% else %}
+# queue.max_events: 0
+{% endif %}
 #
 # If using queue.type: persisted, the total capacity of the queue in number of bytes.
-# If you would like more unacked events to be buffered in Logstash, you can increase the 
-# capacity using this setting. Please make sure your disk drive has capacity greater than 
-# the size specified here. If both max_bytes and max_events are specified, Logstash will pick 
+# If you would like more unacked events to be buffered in Logstash, you can increase the
+# capacity using this setting. Please make sure your disk drive has capacity greater than
+# the size specified here. If both max_bytes and max_events are specified, Logstash will pick
 # whichever criteria is reached first
 # Default is 1024mb or 1gb
 #
-queue.max_bytes: {{ logstash_queue_max_bytes }}
+{% if logstash_conf_queue_max_bytes is defined %}
+queue.max_bytes: {{ logstash_conf_queue_max_bytes }}
+{% else %}
+# queue.max_bytes: 1024mb
+{% endif %}
 #
 # If using queue.type: persisted, the maximum number of acked events before forcing a checkpoint
 # Default is 1024, 0 for unlimited
 #
-queue.checkpoint.acks: {{ logstash_queue_checkpoint_acks }}
+{% if logstash_conf_queue_checkpoint_acks is defined %}
+queue.checkpoint.acks: {{ logstash_conf_queue_checkpoint_acks }}
+{% else %}
+# queue.checkpoint.acks: 1024
+{% endif %}
 #
 # If using queue.type: persisted, the maximum number of written events before forcing a checkpoint
 # Default is 1024, 0 for unlimited
 #
-queue.checkpoint.writes: {{ logstash_queue_checkpoint_writes }}
+{% if logstash_conf_queue_checkpoint_writes is defined %}
+queue.checkpoint.writes: {{ logstash_conf_queue_checkpoint_writes }}
+{% else %}
+# queue.checkpoint.writes: 1024
+{% endif %}
 #
 # If using queue.type: persisted, the interval in milliseconds when a checkpoint is forced on the head page
 # Default is 1000, 0 for no periodic checkpoint.
 #
-queue.checkpoint.interval: {{ logstash_queue_checkpoint_interval }}
+{% if logstash_conf_queue_checkpoint_interval is defined %}
+queue.checkpoint.interval: {{ logstash_conf_queue_checkpoint_interval }}
+{% else %}
+# queue.checkpoint.interval: 1000
+{% endif %}
+#
+# ------------ Dead-Letter Queue Settings --------------
+# Flag to turn on dead-letter queue.
+#
+{% if logstash_conf_dead_letter_queue_enable is defined %}
+dead_letter_queue.enable: {{ logstash_conf_dead_letter_queue_enable | lower }}
+{% else %}
+# dead_letter_queue.enable: false
+{% endif %}
+
+# If using dead_letter_queue.enable: true, the maximum size of each dead letter queue. Entries
+# will be dropped if they would increase the size of the dead letter queue beyond this setting.
+# Default is 1024mb
+{% if logstash_conf_dead_letter_queue_max_bytes is defined %}
+dead_letter_queue.max_bytes: {{ logstash_conf_dead_letter_queue_max_bytes }}
+{% else %}
+# dead_letter_queue.max_bytes: 1024mb
+{% endif %}
+
+# If using dead_letter_queue.enable: true, the directory path where the data files will be stored.
+# Default is path.data/dead_letter_queue
+#
+{% if logstash_conf_path_dead_letter_queue is defined %}
+path.dead_letter_queue: {{ logstash_conf_path_dead_letter_queue }}
+{% else %}
+# path.dead_letter_queue:
+{% endif %}
 #
 # ------------ Metrics Settings --------------
 #
 # Bind address for the metrics REST endpoint
 #
-http.host: "{{ logstash_http_host }}"
+{% if logstash_conf_http_host is defined %}
+http.host: "{{ logstash_conf_http_host }}"
+{% else %}
+# http.host: "127.0.0.1"
+{% endif %}
 #
 # Bind port for the metrics REST endpoint, this option also accept a range
 # (9600-9700) and logstash will pick up the first available ports.
 #
-http.port: {{ logstash_http_port }}
+{% if logstash_conf_http_port is defined %}
+http.port: {{ logstash_conf_http_port }}
+{% else %}
+# http.port: 9600-9700
+{% endif %}
 #
 # ------------ Debugging Settings --------------
 #
@@ -148,21 +312,151 @@ http.port: {{ logstash_http_port }}
 #   * debug
 #   * trace
 #
-log.level: {{ logstash_log_level }}
-path.logs: {{ logstash_path_logs }}
+{% if logstash_conf_log_level is defined %}
+log.level: {{ logstash_conf_log_level }}
+{% else %}
+# log.level: info
+{% endif %}
+path.logs: /var/log/logstash
 #
 # ------------ Other Settings --------------
 #
 # Where to find custom plugins
-{% if logstash_path_plugins is string %}
-path.plugins: ["{{ logstash_path_plugins }}"]
-{% elif logstash_path_plugins is iterable and (logstash_path_plugins | length > 0) %}
-path.plugins: ["{{ logstash_path_plugins | join('","') }}"]
+{% if logstash_conf_path_plugins is defined %}
+path.plugins: {{ logstash_conf_path_plugins | to_json }}
 {% else %}
 # path.plugins: []
 {% endif %}
-
-# Settings path
-{% if logstash_path_settings is defined %}
-path.settings: "{{ logstash_path_settings }}"
+#
+# ------------ X-Pack Settings (not applicable for OSS build)--------------
+#
+# X-Pack Monitoring
+# https://www.elastic.co/guide/en/logstash/current/monitoring-logstash.html
+{% if logstash_conf_xpack_monitoring_enabled is defined %}
+xpack.monitoring.enabled: {{ logstash_conf_xpack_monitoring_enabled | lower }}
+{% else %}
+# xpack.monitoring.enabled: false
+{% endif %}
+{% if logstash_conf_xpack_monitoring_elasticsearch_username is defined %}
+xpack.monitoring.elasticsearch.username: {{ logstash_conf_xpack_monitoring_elasticsearch_username }}
+{% else %}
+# xpack.monitoring.elasticsearch.username: logstash_system
+{% endif %}
+{% if logstash_conf_xpack_monitoring_elasticsearch_password is defined %}
+xpack.monitoring.elasticsearch.password: {{ logstash_conf_xpack_monitoring_elasticsearch_password }}
+{% else %}
+# xpack.monitoring.elasticsearch.password: password
+{% endif %}
+{% if logstash_conf_xpack_monitoring_elasticsearch_url is defined %}
+xpack.monitoring.elasticsearch.url: {{ logstash_conf_xpack_monitoring_elasticsearch_url | to_json }}
+{% else %}
+# xpack.monitoring.elasticsearch.url: ["https://es1:9200", "https://es2:9200"]
+{% endif %}
+{% if logstash_conf_xpack_monitoring_elasticsearch_ssl_ca is defined %}
+xpack.monitoring.elasticsearch.ssl.ca: {{ logstash_conf_xpack_monitoring_elasticsearch_ssl_ca | to_json }}
+{% else %}
+# xpack.monitoring.elasticsearch.ssl.ca: [ "/path/to/ca.crt" ]
+{% endif %}
+{% if logstash_conf_xpack_monitoring_elasticsearch_ssl_truststore_path is defined %}
+xpack.monitoring.elasticsearch.ssl.truststore.path: {{ logstash_conf_xpack_monitoring_elasticsearch_ssl_truststore_path }}
+{% else %}
+# xpack.monitoring.elasticsearch.ssl.truststore.path: path/to/file
+{% endif %}
+{% if logstash_conf_xpack_monitoring_elasticsearch_ssl_truststore_password is defined %}
+xpack.monitoring.elasticsearch.ssl.truststore.password: {{ logstash_conf_xpack_monitoring_elasticsearch_ssl_truststore_password }}
+{% else %}
+# xpack.monitoring.elasticsearch.ssl.truststore.password: password
+{% endif %}
+{% if logstash_conf_xpack_monitoring_elasticsearch_ssl_keystore_path is defined %}
+xpack.monitoring.elasticsearch.ssl.keystore.path: {{ logstash_conf_xpack_monitoring_elasticsearch_ssl_keystore_path }}
+{% else %}
+# xpack.monitoring.elasticsearch.ssl.keystore.path: /path/to/file
+{% endif %}
+{% if logstash_conf_xpack_monitoring_elasticsearch_ssl_keystore_password is defined %}
+xpack.monitoring.elasticsearch.ssl.keystore.password: {{ logstash_conf_xpack_monitoring_elasticsearch_ssl_keystore_password }}
+{% else %}
+# xpack.monitoring.elasticsearch.ssl.keystore.password: password
+{% endif %}
+{% if logstash_conf_xpack_monitoring_elasticsearch_ssl_verification_mode is defined %}
+xpack.monitoring.elasticsearch.ssl.verification_mode: {{ logstash_conf_xpack_monitoring_elasticsearch_ssl_verification_mode }}
+{% else %}
+# xpack.monitoring.elasticsearch.ssl.verification_mode: certificate
+{% endif %}
+{% if logstash_conf_xpack_monitoring_elasticsearch_sniffing is defined %}
+xpack.monitoring.elasticsearch.sniffing: {{ logstash_conf_xpack_monitoring_elasticsearch_sniffing | lower }}
+{% else %}
+# xpack.monitoring.elasticsearch.sniffing: false
+{% endif %}
+{% if logstash_conf_xpack_monitoring_collection_interval is defined %}
+xpack.monitoring.collection.interval: {{ logstash_conf_xpack_monitoring_collection_interval }}
+{% else %}
+# xpack.monitoring.collection.interval: 10s
+{% endif %}
+{% if logstash_conf_xpack_monitoring_collection_pipeline_details_enabled is defined %}
+xpack.monitoring.collection.pipeline.details.enabled: {{ logstash_conf_xpack_monitoring_collection_pipeline_details_enabled | lower }}
+{% else %}
+# xpack.monitoring.collection.pipeline.details.enabled: true
+{% endif %}
+#
+# X-Pack Management
+# https://www.elastic.co/guide/en/logstash/current/logstash-centralized-pipeline-management.html
+{% if logstash_conf_xpack_management_enabled is defined %}
+xpack.management.enabled: {{ logstash_conf_xpack_management_enabled | lower }}
+{% else %}
+# xpack.management.enabled: false
+{% endif %}
+{% if logstash_conf_xpack_management_pipeline_id is defined %}
+xpack.management.pipeline.id: {{ logstash_conf_xpack_management_pipeline_id | to_json }}
+{% else %}
+# xpack.management.pipeline.id: ["main", "apache_logs"]
+{% endif %}
+{% if logstash_conf_xpack_management_elasticsearch_username is defined %}
+xpack.management.elasticsearch.username: {{ logstash_conf_xpack_management_elasticsearch_username }}
+{% else %}
+# xpack.management.elasticsearch.username: logstash_admin_user
+{% endif %}
+{% if logstash_conf_xpack_management_elasticsearch_password is defined %}
+xpack.management.elasticsearch.password: {{ logstash_conf_xpack_management_elasticsearch_password }}
+{% else %}
+# xpack.management.elasticsearch.password: password
+{% endif %}
+{% if logstash_conf_xpack_management_elasticsearch_url is defined %}
+xpack.management.elasticsearch.url: {{ logstash_conf_xpack_management_elasticsearch_url | to_json }}
+{% else %}
+# xpack.management.elasticsearch.url: ["https://es1:9200", "https://es2:9200"]
+{% endif %}
+{% if logstash_conf_xpack_management_elasticsearch_ssl_ca is defined %}
+xpack.management.elasticsearch.ssl.ca: {{ logstash_conf_xpack_management_elasticsearch_ssl_ca | to_json }}
+{% else %}
+# xpack.management.elasticsearch.ssl.ca: [ "/path/to/ca.crt" ]
+{% endif %}
+{% if logstash_conf_xpack_management_elasticsearch_ssl_truststore_path is defined %}
+xpack.management.elasticsearch.ssl.truststore.path: {{ logstash_conf_xpack_management_elasticsearch_ssl_truststore_path }}
+{% else %}
+# xpack.management.elasticsearch.ssl.truststore.path: /path/to/file
+{% endif %}
+{% if logstash_conf_xpack_management_elasticsearch_ssl_truststore_password is defined %}
+xpack.management.elasticsearch.ssl.truststore.password: {{ logstash_conf_xpack_management_elasticsearch_ssl_truststore_password }}
+{% else %}
+# xpack.management.elasticsearch.ssl.truststore.password: password
+{% endif %}
+{% if logstash_conf_xpack_management_elasticsearch_ssl_keystore_path is defined %}
+xpack.management.elasticsearch.ssl.keystore.path: {{ logstash_conf_xpack_management_elasticsearch_ssl_keystore_path }}
+{% else %}
+# xpack.management.elasticsearch.ssl.keystore.path: /path/to/file
+{% endif %}
+{% if logstash_conf_xpack_management_elasticsearch_ssl_keystore_password is defined %}
+xpack.management.elasticsearch.ssl.keystore.password: {{ logstash_conf_xpack_management_elasticsearch_ssl_keystore_password }}
+{% else %}
+# xpack.management.elasticsearch.ssl.keystore.password: password
+{% endif %}
+{% if logstash_conf_xpack_management_elasticsearch_sniffing is defined %}
+xpack.management.elasticsearch.sniffing: {{ logstash_conf_xpack_management_elasticsearch_sniffing | lower }}
+{% else %}
+# xpack.management.elasticsearch.sniffing: false
+{% endif %}
+{% if logstash_conf_xpack_management_logstash_poll_interval is defined %}
+xpack.management.logstash.poll_interval: {{ logstash_conf_xpack_management_logstash_poll_interval }}
+{% else %}
+# xpack.management.logstash.poll_interval: 5s
 {% endif %}
